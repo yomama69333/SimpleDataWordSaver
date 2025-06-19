@@ -23,6 +23,7 @@
       border-radius: 4px;
       background-color: var(--input-bg, #fff);
       color: var(--text-color, #000);
+      transition: background-color 0.3s, color 0.3s;
     }
     textarea {
       height: 150px;
@@ -39,8 +40,12 @@
       color: white;
       transition: background-color 0.2s;
     }
-    button:hover {
+    button:hover:not(:disabled) {
       background-color: #0056b3;
+    }
+    button:disabled {
+      background-color: #a0a0a0;
+      cursor: not-allowed;
     }
     label {
       font-weight: bold;
@@ -49,19 +54,20 @@
     }
     .status {
       margin-top: 10px;
-      color: green;
       font-size: 14px;
       min-height: 18px;
+      transition: color 0.3s;
     }
-    #entryList {
+    #entryList, #searchResults {
       margin-top: 20px;
       padding: 0;
       list-style-type: none;
       border: 1px solid #ccc;
       max-height: 200px;
       overflow-y: auto;
+      border-radius: 4px;
     }
-    #entryList li {
+    #entryList li, #searchResults li {
       padding: 8px 10px;
       border-bottom: 1px solid #eee;
       cursor: pointer;
@@ -74,12 +80,12 @@
       margin-bottom: 4px;
       transition: background-color 0.2s;
     }
-    #entryList li:hover {
+    #entryList li:hover, #searchResults li:hover {
       background-color: #d4f4d4;
     }
     .deleteBtn {
       margin-left: 10px;
-      background: red;
+      background: #dc3545;
       color: white;
       border: none;
       padding: 4px 8px;
@@ -90,7 +96,22 @@
       transition: background-color 0.2s;
     }
     .deleteBtn:hover {
-      background-color: #b30000;
+      background-color: #b02a37;
+    }
+    .copyBtn {
+      margin-left: 10px;
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .copyBtn:hover {
+      background-color: #1e7e34;
     }
     .highlight {
       background-color: #d4f4d4 !important;
@@ -111,45 +132,6 @@
       font-size: 16px;
       box-sizing: border-box;
       margin-bottom: 10px;
-    }
-    #searchResults {
-      margin-top: 10px;
-      border: 1px solid #ccc;
-      max-height: 200px;
-      overflow-y: auto;
-      list-style-type: none;
-      padding: 0;
-    }
-    #searchResults li {
-      padding: 6px 10px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      background-color: var(--entry-bg, #fafafa);
-      border-radius: 4px;
-      margin-bottom: 4px;
-      transition: background-color 0.2s;
-    }
-    #searchResults li:hover {
-      background-color: #e0e0e0;
-    }
-    .copyBtn {
-      margin-left: 10px;
-      background: #28a745;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      font-size: 12px;
-      cursor: pointer;
-      flex-shrink: 0;
-      border-radius: 4px;
-      transition: background-color 0.2s;
-    }
-    .copyBtn:hover {
-      background-color: #1e7e34;
     }
     #privacyModeLabel {
       margin-top: 20px;
@@ -190,20 +172,50 @@
       font-size: 16px;
       cursor: pointer;
     }
+
+    /* Username suggestions dropdown styling */
+    #usernameContainer {
+      position: relative;
+    }
+    #usernameSuggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid #ccc;
+      max-height: 120px;
+      overflow-y: auto;
+      display: none;
+      z-index: 1000;
+      border-radius: 0 0 4px 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+    #usernameSuggestions div {
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    #usernameSuggestions div:hover {
+      background-color: #d4f4d4;
+    }
   </style>
 </head>
 <body>
-  <div id="passwordOverlay">
+  <div id="passwordOverlay" aria-label="Password protection overlay">
     <div>Please enter password to access:</div>
-    <input type="password" id="passwordInput" placeholder="Password"/>
-    <button id="passwordSubmit">Enter</button>
-    <div id="passwordError" style="color:#ff6666; margin-top:8px; display:none;">Incorrect password, try again.</div>
+    <input type="password" id="passwordInput" placeholder="Password" aria-label="Password input"/>
+    <button id="passwordSubmit" aria-label="Submit password">Enter</button>
+    <div id="passwordError" style="color:#ff6666; margin-top:8px; display:none;" role="alert">Incorrect password, try again.</div>
   </div>
 
   <h1>Simple Data Saver</h1>
 
+  <!-- Username input container for suggestions -->
   <label for="usernameInput">Username (required):</label>
-  <input type="text" id="usernameInput" placeholder="Enter your username" autocomplete="off" />
+  <div id="usernameContainer">
+    <input type="text" id="usernameInput" placeholder="Enter your username" autocomplete="off" aria-autocomplete="list" aria-controls="usernameSuggestions" aria-expanded="false" />
+    <div id="usernameSuggestions" role="listbox" aria-label="Username suggestions"></div>
+  </div>
 
   <label for="titleInput">Title (optional):</label>
   <input type="text" id="titleInput" placeholder="Enter a title" autocomplete="off" />
@@ -213,17 +225,17 @@
     Make this entry private
   </label>
 
-  <textarea id="dataInput" placeholder="Type something..."></textarea>
+  <textarea id="dataInput" placeholder="Type something..." aria-label="Text data input"></textarea>
 
   <button id="saveButton">Save Entry</button>
   <button id="clearAllButton" style="background: #555; color: white;">Clear All</button>
   <button id="downloadButton">Download Entry</button>
-  <input type="file" id="uploadFile" style="margin-top:10px;" accept=".txt,text/plain" />
+  <input type="file" id="uploadFile" style="margin-top:10px;" accept=".txt,text/plain" aria-label="Upload text file" />
 
-  <div class="status" id="saveStatus">Not saved yet.</div>
+  <div class="status" id="saveStatus" aria-live="polite" aria-atomic="true">Not saved yet.</div>
 
   <h2>Your Saved Words</h2>
-  <ul id="entryList"></ul>
+  <ul id="entryList" aria-label="Your saved entries"></ul>
 
   <label id="privacyModeLabel">
     <input type="checkbox" id="privacyModeCheckbox" />
@@ -233,300 +245,380 @@
   <div id="searchSection">
     <h2>Search Public Notes</h2>
     <input type="text" id="searchInput" placeholder="Search by username or text..." autocomplete="off" />
-    <ul id="searchResults"></ul>
+    <ul id="searchResults" aria-label="Search results"></ul>
   </div>
 
   <div id="customizationSection">
     <h2>Website Customization</h2>
     <label for="bgColorInput">Background Color:</label>
-    <input type="color" id="bgColorInput" value="#ffffff" />
+    <input type="color" id="bgColorInput" value="#ffffff" aria-label="Background color picker"/>
     <label for="textColorInput">Text Color:</label>
-    <input type="color" id="textColorInput" value="#000000" />
+    <input type="color" id="textColorInput" value="#000000" aria-label="Text color picker"/>
   </div>
 
   <div id="credits">Credits: Ziare Young</div>
 
   <script>
-    // Password protection
-    const PASSWORD = "Project156";
-    const passwordOverlay = document.getElementById('passwordOverlay');
-    const passwordInput = document.getElementById('passwordInput');
-    const passwordSubmit = document.getElementById('passwordSubmit');
-    const passwordError = document.getElementById('passwordError');
+    (() => {
+      const PASSWORD = "Project156";
 
-    passwordSubmit.addEventListener('click', tryPassword);
-    passwordInput.addEventListener('keypress', e => { if (e.key === 'Enter') tryPassword(); });
+      // Elements for password overlay
+      const passwordOverlay = document.getElementById('passwordOverlay');
+      const passwordInput = document.getElementById('passwordInput');
+      const passwordSubmit = document.getElementById('passwordSubmit');
+      const passwordError = document.getElementById('passwordError');
 
-    function tryPassword() {
-      if(passwordInput.value === PASSWORD){
-        passwordOverlay.style.display = 'none';
-        initApp();
-      } else {
-        passwordError.style.display = 'block';
+      // Show error message for wrong password
+      function showPasswordError(show = true) {
+        passwordError.style.display = show ? 'block' : 'none';
       }
-    }
 
-    // Main app initialization after password success
-    function initApp(){
-      const textarea = document.getElementById('dataInput');
-      const titleInput = document.getElementById('titleInput');
-      const usernameInput = document.getElementById('usernameInput');
-      const privacyCheckbox = document.getElementById('privacyCheckbox');
-      const saveButton = document.getElementById('saveButton');
-      const clearAllButton = document.getElementById('clearAllButton');
-      const downloadButton = document.getElementById('downloadButton');
-      const uploadFile = document.getElementById('uploadFile');
-      const status = document.getElementById('saveStatus');
-      const entryList = document.getElementById('entryList');
-      const searchInput = document.getElementById('searchInput');
-      const searchResults = document.getElementById('searchResults');
-      const privacyModeCheckbox = document.getElementById('privacyModeCheckbox');
-      const searchSection = document.getElementById('searchSection');
-      const bgColorInput = document.getElementById('bgColorInput');
-      const textColorInput = document.getElementById('textColorInput');
-
-      // Load saved data from localStorage or empty array
-      let savedEntries = JSON.parse(localStorage.getItem('mySavedEntries')) || [];
-
-      // Load and apply saved customization colors
-      function applyColors(bg, text) {
-        document.body.style.setProperty('--bg-color', bg);
-        document.body.style.setProperty('--text-color', text);
-        document.body.style.setProperty('--input-bg', bg === '#000000' ? '#222' : '#fff');
-      }
-      let savedBg = localStorage.getItem('bgColor') || '#ffffff';
-      let savedText = localStorage.getItem('textColor') || '#000000';
-      bgColorInput.value = savedBg;
-      textColorInput.value = savedText;
-      applyColors(savedBg, savedText);
-
-      bgColorInput.addEventListener('input', () => {
-        applyColors(bgColorInput.value, textColorInput.value);
-        localStorage.setItem('bgColor', bgColorInput.value);
-      });
-      textColorInput.addEventListener('input', () => {
-        applyColors(bgColorInput.value, textColorInput.value);
-        localStorage.setItem('textColor', textColorInput.value);
-      });
-
-      // Privacy mode - toggle search visibility & disable searching
-      function updatePrivacyMode() {
-        const enabled = privacyModeCheckbox.checked;
-        searchSection.style.display = enabled ? 'none' : 'block';
-        if(enabled){
-          searchResults.innerHTML = '';
-          searchInput.value = '';
+      function tryPassword() {
+        if (passwordInput.value === PASSWORD) {
+          passwordOverlay.style.display = 'none';
+          initApp();
+        } else {
+          showPasswordError(true);
         }
       }
-      // Load saved privacy mode setting
-      privacyModeCheckbox.checked = localStorage.getItem('privacyMode') === 'true';
-      updatePrivacyMode();
-      privacyModeCheckbox.addEventListener('change', () => {
-        localStorage.setItem('privacyMode', privacyModeCheckbox.checked);
+
+      passwordSubmit.addEventListener('click', tryPassword);
+      passwordInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') tryPassword();
+      });
+
+      // Main app initialization after correct password
+      function initApp() {
+        // Element references
+        const textarea = document.getElementById('dataInput');
+        const titleInput = document.getElementById('titleInput');
+        const usernameInput = document.getElementById('usernameInput');
+        const privacyCheckbox = document.getElementById('privacyCheckbox');
+        const saveButton = document.getElementById('saveButton');
+        const clearAllButton = document.getElementById('clearAllButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const uploadFile = document.getElementById('uploadFile');
+        const status = document.getElementById('saveStatus');
+        const entryList = document.getElementById('entryList');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const privacyModeCheckbox = document.getElementById('privacyModeCheckbox');
+        const searchSection = document.getElementById('searchSection');
+        const bgColorInput = document.getElementById('bgColorInput');
+        const textColorInput = document.getElementById('textColorInput');
+
+        const usernameSuggestions = document.getElementById('usernameSuggestions');
+        const usernameContainer = document.getElementById('usernameContainer');
+
+        // Load saved entries and usernames from localStorage or initialize empty arrays
+        let savedEntries = JSON.parse(localStorage.getItem('mySavedEntries')) || [];
+        let savedUsernames = JSON.parse(localStorage.getItem('savedUsernames')) || [];
+
+        // --- Color customization ---
+        function applyColors(bg, text) {
+          document.body.style.setProperty('--bg-color', bg);
+          document.body.style.setProperty('--text-color', text);
+          document.body.style.setProperty('--input-bg', bg.toLowerCase() === '#000000' ? '#222' : '#fff');
+        }
+        let savedBg = localStorage.getItem('bgColor') || '#ffffff';
+        let savedText = localStorage.getItem('textColor') || '#000000';
+        bgColorInput.value = savedBg;
+        textColorInput.value = savedText;
+        applyColors(savedBg, savedText);
+
+        bgColorInput.addEventListener('input', () => {
+          applyColors(bgColorInput.value, textColorInput.value);
+          localStorage.setItem('bgColor', bgColorInput.value);
+        });
+        textColorInput.addEventListener('input', () => {
+          applyColors(bgColorInput.value, textColorInput.value);
+          localStorage.setItem('textColor', textColorInput.value);
+        });
+
+        // --- Privacy mode ---
+        function updatePrivacyMode() {
+          const enabled = privacyModeCheckbox.checked;
+          searchSection.style.display = enabled ? 'none' : 'block';
+          if (enabled) {
+            searchResults.innerHTML = '';
+            searchInput.value = '';
+          }
+          localStorage.setItem('privacyMode', enabled);
+        }
+        privacyModeCheckbox.checked = localStorage.getItem('privacyMode') === 'true';
         updatePrivacyMode();
-      });
+        privacyModeCheckbox.addEventListener('change', updatePrivacyMode);
 
-      function showStatusMessage(msg, color = 'green') {
-        status.textContent = msg;
-        status.style.color = color;
-        setTimeout(() => { if(status.textContent === msg) status.textContent = ""; }, 1500);
-      }
+        // --- Utility: Show status message ---
+        let statusTimeout = null;
+        function showStatusMessage(msg, color = 'green') {
+          clearTimeout(statusTimeout);
+          status.textContent = msg;
+          status.style.color = color;
+          statusTimeout = setTimeout(() => {
+            if (status.textContent === msg) status.textContent = '';
+          }, 2000);
+        }
 
-      // Render user's own entries list (both private and public)
-      function renderEntryList() {
-        entryList.innerHTML = '';
-        const user = usernameInput.value.trim();
-        if(user === '') return;
+        // --- Save username for suggestions ---
+        function saveUsername(name) {
+          if (!name) return;
+          if (!savedUsernames.includes(name)) {
+            savedUsernames.push(name);
+            localStorage.setItem('savedUsernames', JSON.stringify(savedUsernames));
+          }
+        }
 
-        savedEntries.forEach((entry, index) => {
-          if(entry.username !== user) return;
-
-          const li = document.createElement('li');
-
-          const content = document.createElement('span');
-          let displayTitle = entry.title ? `${entry.title}: ` : '';
-          displayTitle += entry.text.length > 40 ? entry.text.substring(0,40) + '...' : entry.text;
-          content.textContent = displayTitle;
-          content.title = `User: ${entry.username}\n${entry.text}\nSaved: ${new Date(entry.timestamp).toLocaleString()}\nPrivacy: ${entry.private ? "Private" : "Public"}`;
-          content.style.flex = '1';
-          content.addEventListener('click', () => {
-            textarea.value = entry.text;
-            titleInput.value = entry.title || '';
-            privacyCheckbox.checked = !!entry.private;
-            document.querySelectorAll('#entryList li').forEach(el => el.classList.remove('highlight'));
-            li.classList.add('highlight');
-            showStatusMessage("Loaded entry!");
-          });
-
-          const deleteBtn = document.createElement('button');
-          deleteBtn.textContent = "Delete";
-          deleteBtn.className = "deleteBtn";
-          deleteBtn.onclick = () => {
-            if(confirm("Are you sure you want to delete this entry?")){
-              savedEntries.splice(index, 1);
-              localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
+        // --- Update username suggestions ---
+        function updateUsernameSuggestions() {
+          const val = usernameInput.value.trim().toLowerCase();
+          usernameSuggestions.innerHTML = '';
+          if (!val) {
+            usernameSuggestions.style.display = 'none';
+            usernameInput.setAttribute('aria-expanded', 'false');
+            return;
+          }
+          const matches = savedUsernames.filter(u => u.toLowerCase().startsWith(val));
+          if (matches.length === 0) {
+            usernameSuggestions.style.display = 'none';
+            usernameInput.setAttribute('aria-expanded', 'false');
+            return;
+          }
+          matches.forEach(u => {
+            const div = document.createElement('div');
+            div.textContent = u;
+            div.setAttribute('role', 'option');
+            div.tabIndex = 0;
+            div.addEventListener('click', () => {
+              usernameInput.value = u;
+              usernameSuggestions.style.display = 'none';
+              usernameInput.setAttribute('aria-expanded', 'false');
               renderEntryList();
-              showStatusMessage("Deleted!");
-            }
-          };
-
-          li.appendChild(content);
-          li.appendChild(deleteBtn);
-          entryList.appendChild(li);
-        });
-      }
-
-      // Save new entry or update existing (based on exact match of username+title+text)
-      function saveEntry() {
-        const text = textarea.value.trim();
-        const title = titleInput.value.trim();
-        const user = usernameInput.value.trim();
-        const isPrivate = privacyCheckbox.checked;
-
-        if(user.length === 0){
-          showStatusMessage("Please enter a username.", "red");
-          return;
-        }
-        if(text.length === 0){
-          showStatusMessage("Cannot save empty text.", "red");
-          return;
-        }
-
-        if(savedEntries.some(e => e.text === text && e.title === title && e.username === user)){
-          showStatusMessage("Already saved.", "orange");
-          return;
-        }
-        savedEntries.push({ username: user, title, text, private: isPrivate, timestamp: Date.now() });
-        localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
-        showStatusMessage("Saved!");
-        renderEntryList();
-      }
-
-      // Download current entry as text file
-      function downloadCurrentEntry() {
-        const title = titleInput.value.trim() || 'note';
-        const text = textarea.value.trim();
-        if(text.length === 0){
-          showStatusMessage("Nothing to download.", "red");
-          return;
-        }
-        const blob = new Blob([text], {type:'text/plain'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = title + '.txt';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showStatusMessage("Downloaded!");
-      }
-
-      // Upload text file to textarea
-      function uploadFileHandler(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-        if(file.type !== "text/plain" && !file.name.endsWith('.txt')){
-          showStatusMessage("Only plain text files allowed.", "red");
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(ev){
-          textarea.value = ev.target.result;
-          titleInput.value = file.name.replace(/\.txt$/i,'');
-          showStatusMessage("File loaded.");
-        };
-        reader.readAsText(file);
-        uploadFile.value = '';
-      }
-
-      // Search public entries by username or text
-      function searchEntries(query){
-        query = query.trim().toLowerCase();
-        searchResults.innerHTML = '';
-        if(query.length === 0) return;
-
-        if(privacyModeCheckbox.checked){
-          // Privacy mode active disables searching
-          searchResults.innerHTML = '<li>Privacy mode enabled — search disabled.</li>';
-          return;
-        }
-
-        // Filter entries: public only and match username or text
-        const matches = savedEntries.filter(e => 
-          !e.private &&
-          (e.username.toLowerCase().includes(query) || e.text.toLowerCase().includes(query))
-        );
-
-        if(matches.length === 0){
-          searchResults.innerHTML = '<li>No results found.</li>';
-          return;
-        }
-
-        matches.forEach(entry => {
-          const li = document.createElement('li');
-
-          const content = document.createElement('span');
-          let displayTitle = entry.title ? entry.title + ': ' : '';
-          displayTitle += entry.text.length > 40 ? entry.text.substring(0,40) + '...' : entry.text;
-          content.textContent = displayTitle;
-          content.title = `User: ${entry.username}\n${entry.text}\nSaved: ${new Date(entry.timestamp).toLocaleString()}\nPrivacy: Public`;
-          content.style.flex = '1';
-
-          // Clicking loads public note into main textarea for copy/edit/save
-          content.style.cursor = 'pointer';
-          content.addEventListener('click', () => {
-            usernameInput.value = entry.username;
-            titleInput.value = entry.title || '';
-            privacyCheckbox.checked = false;
-            textarea.value = entry.text;
-            renderEntryList();
-            showStatusMessage("Loaded public note for editing.");
-          });
-
-          // Copy button to copy full text to clipboard
-          const copyBtn = document.createElement('button');
-          copyBtn.textContent = 'Copy';
-          copyBtn.className = 'copyBtn';
-          copyBtn.title = 'Copy full text to clipboard';
-          copyBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // prevent triggering li click load
-            navigator.clipboard.writeText(entry.text).then(() => {
-              showStatusMessage('Copied to clipboard!');
-            }).catch(() => {
-              showStatusMessage('Failed to copy.', 'red');
             });
+            div.addEventListener('keydown', e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                div.click();
+              }
+            });
+            usernameSuggestions.appendChild(div);
           });
+          usernameSuggestions.style.display = 'block';
+          usernameInput.setAttribute('aria-expanded', 'true');
+        }
 
-          li.appendChild(content);
-          li.appendChild(copyBtn);
-          searchResults.appendChild(li);
-        });
-      }
-
-      // Bind events
-      saveButton.addEventListener('click', saveEntry);
-      downloadButton.addEventListener('click', downloadCurrentEntry);
-      clearAllButton.addEventListener('click', () => {
-        if(confirm("Are you sure you want to clear all your entries?")){
+        // --- Render entry list for current username ---
+        function renderEntryList() {
+          entryList.innerHTML = '';
           const user = usernameInput.value.trim();
-          if(user.length === 0){
+          if (!user) return;
+
+          savedEntries.forEach((entry, index) => {
+            if (entry.username !== user) return;
+
+            const li = document.createElement('li');
+
+            const content = document.createElement('span');
+            const displayTitle = entry.title ? `${entry.title}: ` : '';
+            content.textContent = displayTitle + (entry.text.length > 40 ? entry.text.slice(0, 40) + '...' : entry.text);
+            content.title = `User: ${entry.username}\n${entry.text}\nSaved: ${new Date(entry.timestamp).toLocaleString()}\nPrivacy: ${entry.private ? "Private" : "Public"}`;
+            content.style.flex = '1';
+            content.style.cursor = 'pointer';
+            content.addEventListener('click', () => {
+              textarea.value = entry.text;
+              titleInput.value = entry.title || '';
+              privacyCheckbox.checked = !!entry.private;
+              Array.from(entryList.children).forEach(el => el.classList.remove('highlight'));
+              li.classList.add('highlight');
+              showStatusMessage("Loaded entry!");
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = "Delete";
+            deleteBtn.className = "deleteBtn";
+            deleteBtn.title = "Delete this entry";
+            deleteBtn.type = "button";
+            deleteBtn.addEventListener('click', e => {
+              e.stopPropagation();
+              if (confirm("Are you sure you want to delete this entry?")) {
+                savedEntries.splice(index, 1);
+                localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
+                renderEntryList();
+                showStatusMessage("Deleted!");
+              }
+            });
+
+            li.appendChild(content);
+            li.appendChild(deleteBtn);
+            entryList.appendChild(li);
+          });
+        }
+
+        // --- Save a new entry ---
+        function saveEntry() {
+          const text = textarea.value.trim();
+          const title = titleInput.value.trim();
+          const user = usernameInput.value.trim();
+          const isPrivate = privacyCheckbox.checked;
+
+          if (!user) {
             showStatusMessage("Please enter a username.", "red");
             return;
           }
-          savedEntries = savedEntries.filter(e => e.username !== user);
-          localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
-          renderEntryList();
-          showStatusMessage("All your entries cleared.");
-        }
-      });
-      uploadFile.addEventListener('change', uploadFileHandler);
-      searchInput.addEventListener('input', e => searchEntries(e.target.value));
-      usernameInput.addEventListener('input', renderEntryList);
+          if (!text) {
+            showStatusMessage("Cannot save empty text.", "red");
+            return;
+          }
+          if (savedEntries.some(e => e.text === text && e.title === title && e.username === user)) {
+            showStatusMessage("Already saved.", "orange");
+            return;
+          }
 
-      // Initial render
-      renderEntryList();
-    }
+          savedEntries.push({ username: user, title, text, private: isPrivate, timestamp: Date.now() });
+          localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
+          saveUsername(user);
+          showStatusMessage("Saved!");
+          renderEntryList();
+        }
+
+        // --- Download current entry as a text file ---
+        function downloadCurrentEntry() {
+          const title = titleInput.value.trim() || 'note';
+          const text = textarea.value.trim();
+          if (!text) {
+            showStatusMessage("Nothing to download.", "red");
+            return;
+          }
+          const blob = new Blob([text], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${title}.txt`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showStatusMessage("Downloaded!");
+        }
+
+        // --- Upload text file to textarea ---
+        function uploadFileHandler(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          if (file.type !== "text/plain" && !file.name.endsWith('.txt')) {
+            showStatusMessage("Only plain text files allowed.", "red");
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = function (ev) {
+            textarea.value = ev.target.result;
+            titleInput.value = file.name.replace(/\.txt$/i, '');
+            showStatusMessage("File loaded.");
+          };
+          reader.readAsText(file);
+          uploadFile.value = '';
+        }
+
+        // --- Search public entries ---
+        function searchEntries(query) {
+          query = query.trim().toLowerCase();
+          searchResults.innerHTML = '';
+
+          if (!query) return;
+
+          if (privacyModeCheckbox.checked) {
+            searchResults.innerHTML = '<li>Privacy mode enabled — search disabled.</li>';
+            return;
+          }
+
+          const matches = savedEntries.filter(e =>
+            !e.private &&
+            (e.username.toLowerCase().includes(query) || e.text.toLowerCase().includes(query))
+          );
+
+          if (matches.length === 0) {
+            searchResults.innerHTML = '<li>No results found.</li>';
+            return;
+          }
+
+          matches.forEach(entry => {
+            const li = document.createElement('li');
+
+            const content = document.createElement('span');
+            const displayTitle = entry.title ? `${entry.title}: ` : '';
+            content.textContent = displayTitle + (entry.text.length > 40 ? entry.text.slice(0, 40) + '...' : entry.text);
+            content.title = `User: ${entry.username}\n${entry.text}\nSaved: ${new Date(entry.timestamp).toLocaleString()}\nPrivacy: Public`;
+            content.style.flex = '1';
+            content.style.cursor = 'pointer';
+
+            content.addEventListener('click', () => {
+              usernameInput.value = entry.username;
+              titleInput.value = entry.title || '';
+              privacyCheckbox.checked = false;
+              textarea.value = entry.text;
+              renderEntryList();
+              showStatusMessage("Loaded public note for editing.");
+            });
+
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = 'Copy';
+            copyBtn.className = 'copyBtn';
+            copyBtn.title = 'Copy full text to clipboard';
+            copyBtn.type = "button";
+            copyBtn.addEventListener('click', e => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(entry.text).then(() => {
+                showStatusMessage('Copied to clipboard!');
+              }).catch(() => {
+                showStatusMessage('Failed to copy.', 'red');
+              });
+            });
+
+            li.appendChild(content);
+            li.appendChild(copyBtn);
+            searchResults.appendChild(li);
+          });
+        }
+
+        // --- Event bindings ---
+        saveButton.addEventListener('click', saveEntry);
+        downloadButton.addEventListener('click', downloadCurrentEntry);
+
+        clearAllButton.addEventListener('click', () => {
+          const user = usernameInput.value.trim();
+          if (!user) {
+            showStatusMessage("Please enter a username.", "red");
+            return;
+          }
+          if (confirm("Are you sure you want to clear all your entries?")) {
+            savedEntries = savedEntries.filter(e => e.username !== user);
+            localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
+            renderEntryList();
+            showStatusMessage("All your entries cleared.");
+          }
+        });
+
+        uploadFile.addEventListener('change', uploadFileHandler);
+        searchInput.addEventListener('input', e => searchEntries(e.target.value));
+        usernameInput.addEventListener('input', () => {
+          renderEntryList();
+          updateUsernameSuggestions();
+        });
+
+        document.addEventListener('click', e => {
+          if (!usernameContainer.contains(e.target)) {
+            usernameSuggestions.style.display = 'none';
+            usernameInput.setAttribute('aria-expanded', 'false');
+          }
+        });
+
+        // Initial render of the entry list if username already entered
+        if (usernameInput.value.trim()) {
+          renderEntryList();
+          updateUsernameSuggestions();
+        }
+      }
+    })();
   </script>
 </body>
 </html>
