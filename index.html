@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simple Data Saver</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 40px;
+      max-width: 600px;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      font-size: 16px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 10px;
+      color: green;
+      font-size: 14px;
+    }
+    #entryList {
+      margin-top: 20px;
+      padding: 0;
+      list-style-type: none;
+      border: 1px solid #ccc;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #entryList li {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #entryList li:hover {
+      background-color: #f0f0f0;
+    }
+    .deleteBtn {
+      margin-left: 10px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .highlight {
+      background-color: #d4f4d4 !important;
+    }
+    #credits {
+      margin-top: 30px;
+      font-weight: bold;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simple Data Saver</h1>
+  <textarea id="dataInput" placeholder="Type something..."></textarea>
+  <br>
+  <button id="saveButton">Save Entry</button>
+  <button id="clearAllButton" style="background: #555; color: white;">Clear All</button>
+  <div class="status" id="saveStatus">Not saved yet.</div>
+
+  <h2>Your Saved Words</h2>
+  <ul id="entryList"></ul>
+
+  <div id="credits">Credits: Ziare Young</div>
+
+  <script>
+    const textarea = document.getElementById('dataInput');
+    const saveButton = document.getElementById('saveButton');
+    const clearAllButton = document.getElementById('clearAllButton');
+    const status = document.getElementById('saveStatus');
+    const entryList = document.getElementById('entryList');
+
+    let savedEntries = JSON.parse(localStorage.getItem('mySavedEntries')) || [];
+
+    function renderEntryList() {
+      entryList.innerHTML = '';
+      savedEntries.forEach((entry, index) => {
+        const li = document.createElement('li');
+        const content = document.createElement('span');
+        content.textContent = entry.text.length > 40 ? entry.text.substring(0, 40) + '...' : entry.text;
+        content.title = `${entry.text}\nSaved: ${new Date(entry.timestamp).toLocaleString()}`;
+        content.style.flex = '1';
+        content.addEventListener('click', () => {
+          textarea.value = entry.text;
+          document.querySelectorAll('#entryList li').forEach(el => el.classList.remove('highlight'));
+          li.classList.add('highlight');
+          status.textContent = "Loaded entry!";
+          setTimeout(() => status.textContent = "", 1000);
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = "Delete";
+        deleteBtn.className = "deleteBtn";
+        deleteBtn.onclick = () => {
+          savedEntries.splice(index, 1);
+          localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
+          renderEntryList();
+          status.textContent = "Deleted!";
+          setTimeout(() => status.textContent = "", 1000);
+        };
+
+        li.appendChild(content);
+        li.appendChild(deleteBtn);
+        entryList.appendChild(li);
+      });
+    }
+
+    function saveEntry() {
+      const text = textarea.value.trim();
+      if (text.length === 0) {
+        status.textContent = "Cannot save empty text.";
+        return;
+      }
+      if (savedEntries.some(e => e.text === text)) {
+        status.textContent = "Already saved.";
+        return;
+      }
+      savedEntries.push({ text, timestamp: Date.now() });
+      localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
+      status.textContent = "Saved!";
+      setTimeout(() => status.textContent = "", 1000);
+      renderEntryList();
+    }
+
+    saveButton.addEventListener('click', saveEntry);
+
+    clearAllButton.addEventListener('click', () => {
+      if (confirm("Are you sure you want to clear all entries?")) {
+        savedEntries = [];
+        localStorage.removeItem('mySavedEntries');
+        renderEntryList();
+        status.textContent = "All entries cleared.";
+        setTimeout(() => status.textContent = "", 1000);
+      }
+    });
+
+    // Load last typed text into textarea (if any)
+    const lastText = localStorage.getItem('mySavedText') || '';
+    textarea.value = lastText;
+
+    // Live-save current text (not an entry) to localStorage
+    textarea.addEventListener('input', () => {
+      localStorage.setItem('mySavedText', textarea.value);
+    });
+
+    renderEntryList();
+  </script>
+</body>
+</html>
