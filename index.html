@@ -9,24 +9,49 @@
       font-family: sans-serif;
       margin: 40px;
       max-width: 600px;
+      background-color: var(--bg-color, #fff);
+      color: var(--text-color, #000);
+      transition: background-color 0.3s, color 0.3s;
     }
-    textarea {
+    textarea, input[type="text"], input[type="color"] {
       width: 100%;
-      height: 200px;
       font-size: 16px;
       padding: 10px;
       box-sizing: border-box;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: var(--input-bg, #fff);
+      color: var(--text-color, #000);
+    }
+    textarea {
+      height: 150px;
+      resize: vertical;
     }
     button {
       margin-top: 10px;
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background-color: #007BFF;
+      color: white;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
     }
     .status {
       margin-top: 10px;
       color: green;
       font-size: 14px;
+      min-height: 18px;
     }
     #entryList {
       margin-top: 20px;
@@ -43,9 +68,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      background-color: var(--entry-bg, #fafafa);
+      border-radius: 4px;
+      margin-bottom: 4px;
+      transition: background-color 0.2s;
     }
     #entryList li:hover {
-      background-color: #f0f0f0;
+      background-color: #d4f4d4;
     }
     .deleteBtn {
       margin-left: 10px;
@@ -55,6 +85,12 @@
       padding: 4px 8px;
       font-size: 12px;
       cursor: pointer;
+      flex-shrink: 0;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .deleteBtn:hover {
+      background-color: #b30000;
     }
     .highlight {
       background-color: #d4f4d4 !important;
@@ -64,103 +100,433 @@
       font-weight: bold;
       font-size: 14px;
       color: #555;
+      text-align: center;
+    }
+    #searchSection {
+      margin-top: 30px;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    #searchResults {
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      max-height: 200px;
+      overflow-y: auto;
+      list-style-type: none;
+      padding: 0;
+    }
+    #searchResults li {
+      padding: 6px 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      background-color: var(--entry-bg, #fafafa);
+      border-radius: 4px;
+      margin-bottom: 4px;
+      transition: background-color 0.2s;
+    }
+    #searchResults li:hover {
+      background-color: #e0e0e0;
+    }
+    .copyBtn {
+      margin-left: 10px;
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .copyBtn:hover {
+      background-color: #1e7e34;
+    }
+    #privacyModeLabel {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #customizationSection {
+      margin-top: 30px;
+      border: 1px solid #ccc;
+      padding: 10px 15px;
+      border-radius: 6px;
+      background-color: var(--input-bg, #fafafa);
+    }
+    #passwordOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      flex-direction: column;
+      color: white;
+      font-family: sans-serif;
+    }
+    #passwordOverlay input {
+      font-size: 18px;
+      padding: 8px;
+      width: 220px;
+      margin-top: 10px;
+      border-radius: 4px;
+      border: none;
+    }
+    #passwordOverlay button {
+      margin-top: 10px;
+      padding: 8px 20px;
+      font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <div id="passwordOverlay">
+    <div>Please enter password to access:</div>
+    <input type="password" id="passwordInput" placeholder="Password"/>
+    <button id="passwordSubmit">Enter</button>
+    <div id="passwordError" style="color:#ff6666; margin-top:8px; display:none;">Incorrect password, try again.</div>
+  </div>
+
   <h1>Simple Data Saver</h1>
+
+  <label for="usernameInput">Username (required):</label>
+  <input type="text" id="usernameInput" placeholder="Enter your username" autocomplete="off" />
+
+  <label for="titleInput">Title (optional):</label>
+  <input type="text" id="titleInput" placeholder="Enter a title" autocomplete="off" />
+
+  <label for="privacyCheckbox">
+    <input type="checkbox" id="privacyCheckbox" />
+    Make this entry private
+  </label>
+
   <textarea id="dataInput" placeholder="Type something..."></textarea>
-  <br>
+
   <button id="saveButton">Save Entry</button>
   <button id="clearAllButton" style="background: #555; color: white;">Clear All</button>
+  <button id="downloadButton">Download Entry</button>
+  <input type="file" id="uploadFile" style="margin-top:10px;" accept=".txt,text/plain" />
+
   <div class="status" id="saveStatus">Not saved yet.</div>
 
   <h2>Your Saved Words</h2>
   <ul id="entryList"></ul>
 
+  <label id="privacyModeLabel">
+    <input type="checkbox" id="privacyModeCheckbox" />
+    Privacy Mode (Hide public search & disable sharing)
+  </label>
+
+  <div id="searchSection">
+    <h2>Search Public Notes</h2>
+    <input type="text" id="searchInput" placeholder="Search by username or text..." autocomplete="off" />
+    <ul id="searchResults"></ul>
+  </div>
+
+  <div id="customizationSection">
+    <h2>Website Customization</h2>
+    <label for="bgColorInput">Background Color:</label>
+    <input type="color" id="bgColorInput" value="#ffffff" />
+    <label for="textColorInput">Text Color:</label>
+    <input type="color" id="textColorInput" value="#000000" />
+  </div>
+
   <div id="credits">Credits: Ziare Young</div>
 
   <script>
-    const textarea = document.getElementById('dataInput');
-    const saveButton = document.getElementById('saveButton');
-    const clearAllButton = document.getElementById('clearAllButton');
-    const status = document.getElementById('saveStatus');
-    const entryList = document.getElementById('entryList');
+    // Password protection
+    const PASSWORD = "Project156";
+    const passwordOverlay = document.getElementById('passwordOverlay');
+    const passwordInput = document.getElementById('passwordInput');
+    const passwordSubmit = document.getElementById('passwordSubmit');
+    const passwordError = document.getElementById('passwordError');
 
-    let savedEntries = JSON.parse(localStorage.getItem('mySavedEntries')) || [];
+    passwordSubmit.addEventListener('click', tryPassword);
+    passwordInput.addEventListener('keypress', e => { if (e.key === 'Enter') tryPassword(); });
 
-    function renderEntryList() {
-      entryList.innerHTML = '';
-      savedEntries.forEach((entry, index) => {
-        const li = document.createElement('li');
-        const content = document.createElement('span');
-        content.textContent = entry.text.length > 40 ? entry.text.substring(0, 40) + '...' : entry.text;
-        content.title = `${entry.text}\nSaved: ${new Date(entry.timestamp).toLocaleString()}`;
-        content.style.flex = '1';
-        content.addEventListener('click', () => {
-          textarea.value = entry.text;
-          document.querySelectorAll('#entryList li').forEach(el => el.classList.remove('highlight'));
-          li.classList.add('highlight');
-          status.textContent = "Loaded entry!";
-          setTimeout(() => status.textContent = "", 1000);
+    function tryPassword() {
+      if(passwordInput.value === PASSWORD){
+        passwordOverlay.style.display = 'none';
+        initApp();
+      } else {
+        passwordError.style.display = 'block';
+      }
+    }
+
+    // Main app initialization after password success
+    function initApp(){
+      const textarea = document.getElementById('dataInput');
+      const titleInput = document.getElementById('titleInput');
+      const usernameInput = document.getElementById('usernameInput');
+      const privacyCheckbox = document.getElementById('privacyCheckbox');
+      const saveButton = document.getElementById('saveButton');
+      const clearAllButton = document.getElementById('clearAllButton');
+      const downloadButton = document.getElementById('downloadButton');
+      const uploadFile = document.getElementById('uploadFile');
+      const status = document.getElementById('saveStatus');
+      const entryList = document.getElementById('entryList');
+      const searchInput = document.getElementById('searchInput');
+      const searchResults = document.getElementById('searchResults');
+      const privacyModeCheckbox = document.getElementById('privacyModeCheckbox');
+      const searchSection = document.getElementById('searchSection');
+      const bgColorInput = document.getElementById('bgColorInput');
+      const textColorInput = document.getElementById('textColorInput');
+
+      // Load saved data from localStorage or empty array
+      let savedEntries = JSON.parse(localStorage.getItem('mySavedEntries')) || [];
+
+      // Load and apply saved customization colors
+      function applyColors(bg, text) {
+        document.body.style.setProperty('--bg-color', bg);
+        document.body.style.setProperty('--text-color', text);
+        document.body.style.setProperty('--input-bg', bg === '#000000' ? '#222' : '#fff');
+      }
+      let savedBg = localStorage.getItem('bgColor') || '#ffffff';
+      let savedText = localStorage.getItem('textColor') || '#000000';
+      bgColorInput.value = savedBg;
+      textColorInput.value = savedText;
+      applyColors(savedBg, savedText);
+
+      bgColorInput.addEventListener('input', () => {
+        applyColors(bgColorInput.value, textColorInput.value);
+        localStorage.setItem('bgColor', bgColorInput.value);
+      });
+      textColorInput.addEventListener('input', () => {
+        applyColors(bgColorInput.value, textColorInput.value);
+        localStorage.setItem('textColor', textColorInput.value);
+      });
+
+      // Privacy mode - toggle search visibility & disable searching
+      function updatePrivacyMode() {
+        const enabled = privacyModeCheckbox.checked;
+        searchSection.style.display = enabled ? 'none' : 'block';
+        if(enabled){
+          searchResults.innerHTML = '';
+          searchInput.value = '';
+        }
+      }
+      // Load saved privacy mode setting
+      privacyModeCheckbox.checked = localStorage.getItem('privacyMode') === 'true';
+      updatePrivacyMode();
+      privacyModeCheckbox.addEventListener('change', () => {
+        localStorage.setItem('privacyMode', privacyModeCheckbox.checked);
+        updatePrivacyMode();
+      });
+
+      function showStatusMessage(msg, color = 'green') {
+        status.textContent = msg;
+        status.style.color = color;
+        setTimeout(() => { if(status.textContent === msg) status.textContent = ""; }, 1500);
+      }
+
+      // Render user's own entries list (both private and public)
+      function renderEntryList() {
+        entryList.innerHTML = '';
+        const user = usernameInput.value.trim();
+        if(user === '') return;
+
+        savedEntries.forEach((entry, index) => {
+          if(entry.username !== user) return;
+
+          const li = document.createElement('li');
+
+          const content = document.createElement('span');
+          let displayTitle = entry.title ? `${entry.title}: ` : '';
+          displayTitle += entry.text.length > 40 ? entry.text.substring(0,40) + '...' : entry.text;
+          content.textContent = displayTitle;
+          content.title = `User: ${entry.username}\n${entry.text}\nSaved: ${new Date(entry.timestamp).toLocaleString()}\nPrivacy: ${entry.private ? "Private" : "Public"}`;
+          content.style.flex = '1';
+          content.addEventListener('click', () => {
+            textarea.value = entry.text;
+            titleInput.value = entry.title || '';
+            privacyCheckbox.checked = !!entry.private;
+            document.querySelectorAll('#entryList li').forEach(el => el.classList.remove('highlight'));
+            li.classList.add('highlight');
+            showStatusMessage("Loaded entry!");
+          });
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = "Delete";
+          deleteBtn.className = "deleteBtn";
+          deleteBtn.onclick = () => {
+            if(confirm("Are you sure you want to delete this entry?")){
+              savedEntries.splice(index, 1);
+              localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
+              renderEntryList();
+              showStatusMessage("Deleted!");
+            }
+          };
+
+          li.appendChild(content);
+          li.appendChild(deleteBtn);
+          entryList.appendChild(li);
         });
+      }
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = "Delete";
-        deleteBtn.className = "deleteBtn";
-        deleteBtn.onclick = () => {
-          savedEntries.splice(index, 1);
+      // Save new entry or update existing (based on exact match of username+title+text)
+      function saveEntry() {
+        const text = textarea.value.trim();
+        const title = titleInput.value.trim();
+        const user = usernameInput.value.trim();
+        const isPrivate = privacyCheckbox.checked;
+
+        if(user.length === 0){
+          showStatusMessage("Please enter a username.", "red");
+          return;
+        }
+        if(text.length === 0){
+          showStatusMessage("Cannot save empty text.", "red");
+          return;
+        }
+
+        if(savedEntries.some(e => e.text === text && e.title === title && e.username === user)){
+          showStatusMessage("Already saved.", "orange");
+          return;
+        }
+        savedEntries.push({ username: user, title, text, private: isPrivate, timestamp: Date.now() });
+        localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
+        showStatusMessage("Saved!");
+        renderEntryList();
+      }
+
+      // Download current entry as text file
+      function downloadCurrentEntry() {
+        const title = titleInput.value.trim() || 'note';
+        const text = textarea.value.trim();
+        if(text.length === 0){
+          showStatusMessage("Nothing to download.", "red");
+          return;
+        }
+        const blob = new Blob([text], {type:'text/plain'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = title + '.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showStatusMessage("Downloaded!");
+      }
+
+      // Upload text file to textarea
+      function uploadFileHandler(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        if(file.type !== "text/plain" && !file.name.endsWith('.txt')){
+          showStatusMessage("Only plain text files allowed.", "red");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(ev){
+          textarea.value = ev.target.result;
+          titleInput.value = file.name.replace(/\.txt$/i,'');
+          showStatusMessage("File loaded.");
+        };
+        reader.readAsText(file);
+        uploadFile.value = '';
+      }
+
+      // Search public entries by username or text
+      function searchEntries(query){
+        query = query.trim().toLowerCase();
+        searchResults.innerHTML = '';
+        if(query.length === 0) return;
+
+        if(privacyModeCheckbox.checked){
+          // Privacy mode active disables searching
+          searchResults.innerHTML = '<li>Privacy mode enabled — search disabled.</li>';
+          return;
+        }
+
+        // Filter entries: public only and match username or text
+        const matches = savedEntries.filter(e => 
+          !e.private &&
+          (e.username.toLowerCase().includes(query) || e.text.toLowerCase().includes(query))
+        );
+
+        if(matches.length === 0){
+          searchResults.innerHTML = '<li>No results found.</li>';
+          return;
+        }
+
+        matches.forEach(entry => {
+          const li = document.createElement('li');
+
+          const content = document.createElement('span');
+          let displayTitle = entry.title ? entry.title + ': ' : '';
+          displayTitle += entry.text.length > 40 ? entry.text.substring(0,40) + '...' : entry.text;
+          content.textContent = displayTitle;
+          content.title = `User: ${entry.username}\n${entry.text}\nSaved: ${new Date(entry.timestamp).toLocaleString()}\nPrivacy: Public`;
+          content.style.flex = '1';
+
+          // Clicking loads public note into main textarea for copy/edit/save
+          content.style.cursor = 'pointer';
+          content.addEventListener('click', () => {
+            usernameInput.value = entry.username;
+            titleInput.value = entry.title || '';
+            privacyCheckbox.checked = false;
+            textarea.value = entry.text;
+            renderEntryList();
+            showStatusMessage("Loaded public note for editing.");
+          });
+
+          // Copy button to copy full text to clipboard
+          const copyBtn = document.createElement('button');
+          copyBtn.textContent = 'Copy';
+          copyBtn.className = 'copyBtn';
+          copyBtn.title = 'Copy full text to clipboard';
+          copyBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // prevent triggering li click load
+            navigator.clipboard.writeText(entry.text).then(() => {
+              showStatusMessage('Copied to clipboard!');
+            }).catch(() => {
+              showStatusMessage('Failed to copy.', 'red');
+            });
+          });
+
+          li.appendChild(content);
+          li.appendChild(copyBtn);
+          searchResults.appendChild(li);
+        });
+      }
+
+      // Bind events
+      saveButton.addEventListener('click', saveEntry);
+      downloadButton.addEventListener('click', downloadCurrentEntry);
+      clearAllButton.addEventListener('click', () => {
+        if(confirm("Are you sure you want to clear all your entries?")){
+          const user = usernameInput.value.trim();
+          if(user.length === 0){
+            showStatusMessage("Please enter a username.", "red");
+            return;
+          }
+          savedEntries = savedEntries.filter(e => e.username !== user);
           localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
           renderEntryList();
-          status.textContent = "Deleted!";
-          setTimeout(() => status.textContent = "", 1000);
-        };
-
-        li.appendChild(content);
-        li.appendChild(deleteBtn);
-        entryList.appendChild(li);
+          showStatusMessage("All your entries cleared.");
+        }
       });
-    }
+      uploadFile.addEventListener('change', uploadFileHandler);
+      searchInput.addEventListener('input', e => searchEntries(e.target.value));
+      usernameInput.addEventListener('input', renderEntryList);
 
-    function saveEntry() {
-      const text = textarea.value.trim();
-      if (text.length === 0) {
-        status.textContent = "Cannot save empty text.";
-        return;
-      }
-      if (savedEntries.some(e => e.text === text)) {
-        status.textContent = "Already saved.";
-        return;
-      }
-      savedEntries.push({ text, timestamp: Date.now() });
-      localStorage.setItem('mySavedEntries', JSON.stringify(savedEntries));
-      status.textContent = "Saved!";
-      setTimeout(() => status.textContent = "", 1000);
+      // Initial render
       renderEntryList();
     }
-
-    saveButton.addEventListener('click', saveEntry);
-
-    clearAllButton.addEventListener('click', () => {
-      if (confirm("Are you sure you want to clear all entries?")) {
-        savedEntries = [];
-        localStorage.removeItem('mySavedEntries');
-        renderEntryList();
-        status.textContent = "All entries cleared.";
-        setTimeout(() => status.textContent = "", 1000);
-      }
-    });
-
-    // Load last typed text into textarea (if any)
-    const lastText = localStorage.getItem('mySavedText') || '';
-    textarea.value = lastText;
-
-    // Live-save current text (not an entry) to localStorage
-    textarea.addEventListener('input', () => {
-      localStorage.setItem('mySavedText', textarea.value);
-    });
-
-    renderEntryList();
   </script>
 </body>
 </html>
